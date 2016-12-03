@@ -6,7 +6,7 @@ use LWP::Simple;
 
 my $path = "B:\\Business\\Data\\BabyNameGuesser";
 open (INFILE, "<$path\\genni_firstnamelist.txt") or die "Can't open subjects file: genni_firstnamelist.txt";
-open (OUTFILE, ">$path\\Genni_Harvest.txt") or die "Can't open subjects file: BNG_Harvest.txt";
+open (OUTFILE, ">$path\\BNG_Harvest.txt") or die "Can't open subjects file: BNG_Harvest.txt";
 
 while (<INFILE>) {
   
