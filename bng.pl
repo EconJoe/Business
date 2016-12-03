@@ -4,9 +4,9 @@ use strict;
 use warnings;
 use LWP::Simple;
 
-my $path = "B:\\Business\\Data\\Genni";
+my $path = "B:\\Business\\Data\\BabyNameGuesser";
 open (INFILE, "<$path\\genni_firstnamelist.txt") or die "Can't open subjects file: genni_firstnamelist.txt";
-open (OUTFILE, ">$path\\Genni_Harvest.txt") or die "Can't open subjects file: Genni_Harvest.txt";
+open (OUTFILE, ">$path\\Genni_Harvest.txt") or die "Can't open subjects file: BNG_Harvest.txt";
 
 while (<INFILE>) {
   
@@ -19,11 +19,9 @@ while (<INFILE>) {
     die "Couldn't get $url" unless defined $content;
     sleep 1.5;
 
-    if ($content=~/<p>Based on the current population distribution, there is a <b>(.*?)%<\/b> chance that a living person named <b>(.*?)<\/b> is <b>(.*?)<\/b>/) {
-       my $percent=$1;
-       my $name=$2;
-       my $gender=$3;
-       print OUTFILE "$name 	$gender	$percent\n";
+    if ($content=~/<b>It's a (.*?)!<\/b>/) {
+       my $gender=$1;
+       print OUTFILE "$name 	$gender\n";
     }
   }
 }
