@@ -1,11 +1,11 @@
 
 cd B:\Business\Data\Ohio\StateWide
-import delimited "SWVF_1_44.txt", clear delimiter(comma) varnames(1)
+import delimited "SWVF_1_44.txt", clear delimiter(comma) varnames(1) stringcols(_all) 
 compress
 save SWVF_1_44, replace
 
 cd B:\Business\Data\Ohio\StateWide
-import delimited "SWVF_45_88.txt", clear delimiter(comma) varnames(1)
+import delimited "SWVF_45_88.txt", clear delimiter(comma) varnames(1) stringcols(_all)
 compress
 save SWVF_45_88, replace
 
@@ -77,6 +77,19 @@ sort sos_voterid
 cd B:\Business\Data\Ohio\StateWide
 use SWVF_1_44, clear
 keep sos_voterid voter_status party_affiliation primary*
+tempfile hold
+save `hold', replace
+* Determine the "Democrat-ness" and the "Republican-ness" of each voter
+cd B:\Business\Data\Ohio\StateWide
+use SWVF_45_88, clear
+keep sos_voterid voter_status party_affiliation primary*
+append using `hold'
+save `hold', replace
+
+clear
+gen sos_voterid=""
+tempfile demrep
+save `demrep', replace
 
 local electionlist_primary primary03072000 primary05072002 primary03022004 primary05032005 ///
                            primary09132005 primary05022006 primary05082007 primary09112007 ///
@@ -86,7 +99,59 @@ local electionlist_primary primary03072000 primary05072002 primary03022004 prima
 						   primary03062012 primary05072013 primary09102013 primary10012013 ///
 						   primary05062014 primary05052015 primary09152015 primary03152016 ///
 						   primary09132016
-						   
+
+set more off
 foreach election in `electionlist_primary' {
 	
+	use `hold', clear
+	keep sos_voterid voter_status party_affiliation `election'
+	drop if `election'==""
+	rename `election' election_partic
+	gen election="`election'"
+	replace election=regexs(1) if regexm(election, "primary(.*)")
+	append using `demrep'
+	save `demrep', replace
+}
 
+sort sos_voterid election
+compress
+cd B:\Business\Data
+save demrep, replace
+
+cd B:\Business\Data
+use demrep, clear
+gen affil_R=(party_affiliation=="R")
+gen affil_D=(party_affiliation=="D")
+gen affil_O=(party_affiliation!="R" & party_affiliation!="D")
+
+gen vote_R=(election_partic=="R")
+gen vote_D=(election_partic=="D")
+gen vote_O=(election_partic!="R" & election_partic!="D")
+collapse (max) affil_* (sum) vote_*, by(sos_voterid voter_status)
+
+gen votetot=vote_R+vote_D+vote_O
+gen voteprop_R=vote_R/votetot
+gen voteprop_D=vote_D/votetot
+gen voteprop_O=vote_O/votetot
+
+egen affil_R_std = std(affil_R)
+egen affil_D_std = std(affil_D)
+egen affil_O_std = std(affil_O)
+
+egen voteprop_R_std = std(voteprop_R)
+egen voteprop_D_std = std(voteprop_D)
+egen voteprop_O_std = std(voteprop_O)
+
+gen score_R=(0.5*affil_R_std + 0.5*voteprop_R_std)
+su score_R, meanonly 
+replace score_R = (score_R - r(min)) / (r(max) - r(min)) 
+
+gen score_D=(0.5*affil_D_std + 0.5*vote_D_std)
+su score_D, meanonly 
+replace score_D = (score_D - r(min)) / (r(max) - r(min)) 
+
+
+
+* registration
+* number of elections
+* most recent elections
