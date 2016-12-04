@@ -120,6 +120,12 @@ save demrep, replace
 
 cd B:\Business\Data
 use demrep, clear
+gen election_year=regexs(1) if regexm(election, "[0-9][0-9][0-9][0-9]([0-9][0-9][0-9][0-9])")
+gen election_month=regexs(1) if regexm(election, "([0-9][0-9])[0-9][0-9][0-9][0-9][0-9][0-9]")
+gen election_day=regexs(1) if regexm(election, "[0-9][0-9]([0-9][0-9])[0-9][0-9][0-9][0-9]")
+destring election_year election_month election_day, replace
+
+
 gen affil_R=(party_affiliation=="R")
 gen affil_D=(party_affiliation=="D")
 gen affil_O=(party_affiliation!="R" & party_affiliation!="D")
@@ -146,10 +152,18 @@ gen score_R=(0.5*affil_R_std + 0.5*voteprop_R_std)
 su score_R, meanonly 
 replace score_R = (score_R - r(min)) / (r(max) - r(min)) 
 
-gen score_D=(0.5*affil_D_std + 0.5*vote_D_std)
+gen score_D=(0.5*affil_D_std + 0.5*voteprop_D_std)
 su score_D, meanonly 
-replace score_D = (score_D - r(min)) / (r(max) - r(min)) 
+replace score_D = (score_D - r(min)) / (r(max) - r(min))
 
+gen score_O=(0.5*affil_O_std + 0.5*voteprop_O_std)
+su score_O, meanonly 
+replace score_O = (score_O - r(min)) / (r(max) - r(min))  
+
+hist score_R
+hist score_D
+reg score_R score_D score_O
+twoway (kdensity score_R)
 
 
 * registration
