@@ -47,14 +47,15 @@ save demrep, replace
 
 cd B:\Business\Data
 use demrep, clear
-replace election="primary"+election
 cd B:\Business\Data
 merge m:1 election using electionids
 drop if _merge==2
 drop _merge
 order sos_voterid electionid election
 
-* Idnetify elections in which a person voted in a primary
+*replace election="primary"+election
+
+* Idnetify elections in which a person voted in a republican, democratic, or other primary
 gen vote_R=(election_partic=="R")
 gen vote_D=(election_partic=="D")
 gen vote_O=(election_partic!="R" & election_partic!="D")
